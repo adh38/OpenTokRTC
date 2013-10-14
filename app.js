@@ -64,6 +64,7 @@ app.get("/:rid", function( req, res ){
     var sidSnapshot = dataSnapshot.child('sid');
     var sid = sidSnapshot.val();
     if(!sid){
+	  console.info(OpenTokObject);
       OpenTokObject.createSession(function(sessionId){
         sidSnapshot.ref().set( sessionId );
         returnRoomResponse( res, { rid: rid, sid: sessionId }, path[1]);
@@ -88,4 +89,5 @@ function returnRoomResponse( res, data, json ){
 // *** start server, listen to port (predefined or 9393)
 // ***
 var port = process.env.PORT || 5000;
+console.log('listening on ' + port);
 app.listen(port);
