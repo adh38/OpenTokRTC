@@ -9,8 +9,8 @@ var OpenTokLibrary = require('opentok');
 // *** OpenTok Constants for creating Session and Token values
 // ***
 console.info(process.env);
-var OTKEY = process.env.TB_KEY;
-var OTSECRET = process.env.TB_SECRET;
+var OTKEY = '44156752'; //process.env.TB_KEY;
+var OTSECRET = '0a5d1911011764f7ce92322aadfb72d503880225'; //process.env.TB_SECRET;
 var OpenTokObject = new OpenTokLibrary.OpenTokSDK(OTKEY, OTSECRET);
 
 // ***
