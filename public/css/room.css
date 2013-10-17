@@ -237,3 +237,13 @@ body {
     vertical-align: middle;
     line-height: 100%;
     font-size: 30px; }
+
+#next_button {
+	margin: auto;
+	width: auto;
+	text-align: center;
+	font-size: 30px;
+	background-color: green;
+	border-radius: 5px;
+}
+

@@ -9,13 +9,15 @@
 
   User = (function() {
 
-    function User(rid, apiKey, sid, token) {
+    function User(rid, apiKey, sid, token, uid, uname) {
       var self,
         _this = this;
       this.rid = rid;
       this.apiKey = apiKey;
       this.sid = sid;
       this.token = token;
+      this.uid = uid;
+      this.uname = uname;
       this.inputKeypress = function(e) {
         return User.prototype.inputKeypress.apply(_this, arguments);
       };
@@ -41,9 +43,9 @@
       this.userStreamTemplate = Handlebars.compile($("#userStreamTemplate").html());
       this.notifyTemplate = Handlebars.compile($("#notifyTemplate").html());
       this.takenNames = {};
-      this.roomRef = new Firebase("https://rtcdemo.firebaseIO.com/room/" + this.rid);
-      this.chatRef = new Firebase("https://rtcdemo.firebaseIO.com/room/" + this.rid + "/chat/");
-      this.usersRef = new Firebase("https://rtcdemo.firebaseIO.com/room/" + this.rid + "/users/");
+      this.roomRef = new Firebase("https://jamroulette.firebaseIO.com/room/" + this.rid);
+      this.chatRef = new Firebase("https://jamroulette.firebaseIO.com/room/" + this.rid + "/chat/");
+      this.usersRef = new Firebase("https://jamroulette.firebaseIO.com/room/" + this.rid + "/users/");
       this.usersRef.on("child_added", function(childSnapshot, prevChildName) {
         _this.takenNames[childSnapshot.val().name] = true;
         return _this.displayChatMessage(_this.notifyTemplate({
@@ -51,10 +53,14 @@
         }));
       });
       this.usersRef.on("child_removed", function(childSnapshot) {
-        _this.takenNames[childSnapshot.val().name] = false;
+        //child_removed means we got nexted - time to move on
+        if(_this.presenceRef) _this.presenceRef.remove();
+        window.location = "/next?uid=" + _this.uid + "&uname=" + _this.uname;
+
+        /*_this.takenNames[childSnapshot.val().name] = false;
         return _this.displayChatMessage(_this.notifyTemplate({
           message: "" + (childSnapshot.val().name) + " has left the room"
-        }));
+        }));//*/
       });
       this.usersRef.on("child_changed", function(childSnapshot, prevChildName) {
         var val;
@@ -113,6 +119,15 @@
         $(this).addClass("optionSelected");
         return self.presenceRef.child("filter").set(prop);
       });
+      //have the NEXT button place this user back on the waiting list
+      $("#next_button").click(function() {
+      	if(!self.presenceRef) {
+	   		console.log("not connected yet - cannot next");
+	   		return;
+	   	}
+	   	self.presenceRef.remove();
+	   	window.location = "/next?uid=" + self.uid + "&uname=" + self.uname;
+      });
     }
 
     User.prototype.applyClassFilter = function(prop, selector) {
@@ -160,7 +175,7 @@
             return self.session.forceDisconnect(streamConnection.split("stream")[1]);
           }
         });
-        streamRef = new Firebase("https://rtcdemo.firebaseIO.com/room/" + this.rid + "/users/" + streamConnectionId + "/filter");
+        streamRef = new Firebase("https://jamroulette.firebaseIO.com/room/" + this.rid + "/users/" + streamConnectionId + "/filter");
         streamRef.once('value', function(dataSnapshot) {
           var val;
           val = dataSnapshot.val();
@@ -172,14 +187,14 @@
     User.prototype.sessionConnectedHandler = function(event) {
       var date,
         _this = this;
-      console.log("session connected");
       this.subscribeStreams(event.streams);
       this.session.publish(this.publisher);
       ResizeLayoutContainer();
       date = "" + (Date.now());
-      this.name = "Guest" + (date.substring(date.length - 8, date.length));
+      this.name = this.uname; //"Guest" + (date.substring(date.length - 8, date.length));
+      console.log("connected as " + this.name);
       this.myConnectionId = this.session.connection.connectionId;
-      this.presenceRef = new Firebase("https://rtcdemo.firebaseIO.com/room/" + this.rid + "/users/" + this.myConnectionId);
+      this.presenceRef = new Firebase("https://jamroulette.firebaseIO.com/room/" + this.rid + "/users/" + this.myConnectionId);
       this.presenceRef.child("name").set(this.name);
       this.presenceRef.onDisconnect().remove();
       $("#messageInput").removeAttr("disabled");
